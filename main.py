@@ -31,8 +31,8 @@ def main():
     tm = TradeManager(
         logger=logger,
         mt5_path="C:/Program Files/MetaTrader 5 - IA/terminal64.exe",
-        login=61409959,
-        password="JoaoSolis1234!",
+        login=61410395,
+        password="bkshe2Lqc(",
         server="Pepperstone-Demo",
         threshold=0.5
     )
