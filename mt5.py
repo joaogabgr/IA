@@ -185,13 +185,13 @@ class TradeManager:
 
             # 1️⃣ Ordem a mercado
             market_comment = f"{trade_id}_market"
-            market_result = self._send_market_order(symbol, trade_type, stop_loss, take_profit, market_comment, lot_result['lote'])
+            market_result = self._send_market_order(symbol, trade_type, stop_loss, take_profit, market_comment, lot_result['lote'], prob_sucesso*100)
             if market_result:
                 results.append(market_result)
 
             # 2️⃣ Ordem pendente
             pending_comment = f"{trade_id}_pending"
-            pending_result = self._send_pending_order(symbol, trade_type, entry_price, stop_loss, take_profit, pending_comment)
+            pending_result = self._send_pending_order(symbol, trade_type, entry_price, stop_loss, take_profit, pending_comment, prob_sucesso*100)
             if pending_result:
                 results.append(pending_result)
 
@@ -209,7 +209,7 @@ class TradeManager:
             self.logger.error(f"Erro ao enviar ordem: {e}")
             return None
 
-    def _send_market_order(self, symbol, trade_type, stop_loss, take_profit, comment, lot_size):
+    def _send_market_order(self, symbol, trade_type, stop_loss, take_profit, comment, lot_size, prob_sucesso):
         """Envia ordem a mercado imediata"""
         try:
             tick = mt5.symbol_info_tick(symbol)
@@ -240,7 +240,7 @@ class TradeManager:
                     "magic": 99999,
                     "type_time": mt5.ORDER_TIME_GTC,
                     "type_filling": mode,
-                    "comment": comment[:20],
+                    "comment": prob_sucesso,
                 }
 
                 result = mt5.order_send(request)
@@ -260,7 +260,7 @@ class TradeManager:
             return None
 
 
-    def _send_pending_order(self, symbol, trade_type, entry_price, stop_loss, take_profit, comment):
+    def _send_pending_order(self, symbol, trade_type, entry_price, stop_loss, take_profit, comment, prob_sucesso):
         """Envia ordem pendente"""
         try:
             lot_result = self.calculate_normalized_lot(symbol, trade_type, entry_price, stop_loss, take_profit, risco_alvo=100.0)
@@ -290,7 +290,7 @@ class TradeManager:
                 "magic": 88888,
                 "type_time": mt5.ORDER_TIME_GTC,
                 "type_filling": mt5.ORDER_FILLING_RETURN,
-                "comment": comment[:20],
+                "comment": prob_sucesso,
             }
 
             result = mt5.order_send(request)
