@@ -1,8 +1,3 @@
-# ===============================================
-# treinar_modelo.py
-# Treina e salva o modelo RandomForest para trades
-# ===============================================
-
 import pandas as pd
 import joblib
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -18,7 +13,7 @@ def treinar_e_salvar_modelo(csv_path="trades.csv"):
     df["success"] = (df["profit"] > 0).astype(int)
 
     # Seleção de features
-    X = df[["ativo", "tipo", "timeframe", "setup",
+    X = df[["ativo", "name", "tipo", "timeframe", "setup", "analise",
             "nivelDeEntrada", "stopLoss", "nivelDeAlvo",
             "riscoLoss", "riscoProfit"]].copy()
     y = df["success"]
@@ -27,9 +22,10 @@ def treinar_e_salvar_modelo(csv_path="trades.csv"):
     X["risk_reward_ratio"] = X["riscoProfit"] / (X["riscoLoss"] + 1e-6)
     X["alvo_distancia"] = X["nivelDeAlvo"] - X["nivelDeEntrada"]
 
-    # Label Encoding
+    # Label Encoding for all categorical columns
     label_encoders = {}
-    for col in ["ativo", "tipo", "timeframe", "setup"]:
+    categorical_columns = ["ativo", "name", "tipo", "timeframe", "setup", "analise"]
+    for col in categorical_columns:
         le = LabelEncoder()
         X.loc[:, col] = le.fit_transform(X[col])
         label_encoders[col] = le
@@ -44,11 +40,11 @@ def treinar_e_salvar_modelo(csv_path="trades.csv"):
     X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
 
     # GridSearch para otimização
-    param_grid = {
-        "n_estimators": [500],
-        "max_depth": [None, 20],
+    param_grid = { 
+        "n_estimators": [1000],
+        "max_depth": [None, 30],
         "min_samples_split": [2, 5],
-        "min_samples_leaf": [1, 2]
+        "min_samples_leaf": [1, 2] 
     }
 
     grid = GridSearchCV(
