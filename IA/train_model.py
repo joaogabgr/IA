@@ -13,7 +13,7 @@ def treinar_e_salvar_modelo(csv_path="trades.csv"):
     df["success"] = (df["profit"] > 0).astype(int)
 
     # Seleção de features
-    X = df[["ativo", "name", "tipo", "timeframe", "setup", "analise",
+    X = df[["ativo", "name", "tipo", "timeframe", "setup",
             "nivelDeEntrada", "stopLoss", "nivelDeAlvo",
             "riscoLoss", "riscoProfit"]].copy()
     y = df["success"]
@@ -24,7 +24,7 @@ def treinar_e_salvar_modelo(csv_path="trades.csv"):
 
     # Label Encoding for all categorical columns
     label_encoders = {}
-    categorical_columns = ["ativo", "name", "tipo", "timeframe", "setup", "analise"]
+    categorical_columns = ["ativo", "name", "tipo", "timeframe", "setup"]
     for col in categorical_columns:
         le = LabelEncoder()
         X.loc[:, col] = le.fit_transform(X[col])

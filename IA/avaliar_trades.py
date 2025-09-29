@@ -26,7 +26,7 @@ def avaliar_trade(trade_dict, modelo, encoders, threshold=0.5):
     novo_trade["alvo_distancia"] = novo_trade["nivelDeAlvo"] - novo_trade["nivelDeEntrada"]
 
     # Aplicar encoders
-    for col in ["ativo", "tipo", "timeframe", "setup"]:
+    for col in ["ativo", "name", "tipo", "timeframe", "setup"]:
         novo_trade[col] = encoders[col].transform(novo_trade[col])
 
     novo_trade = novo_trade.apply(pd.to_numeric, errors="coerce")
