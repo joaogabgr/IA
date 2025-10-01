@@ -29,7 +29,7 @@ class TradeManager:
                 self.logger.info(f"✅ Logado com sucesso na conta {login} no servidor {server}")
 
         # Carregar modelo IA
-        self.modelo, self.encoders = carregar_modelo()
+        self.modelo, self.encoders, self.scaler = carregar_modelo()
 
     # -------------------------------
     # Fechar conexão com MT5
@@ -175,7 +175,7 @@ class TradeManager:
             }
 
             # IA valida probabilidade
-            prob_sucesso = avaliar_trade(trade_dict, self.modelo, self.encoders, threshold=self.threshold)
+            prob_sucesso = avaliar_trade(trade_dict, self.modelo, self.encoders, self.scaler, threshold=self.threshold)
             if prob_sucesso < self.threshold:
                 return {"success": False, "reason": "IA rejeitou trade", "prob_sucesso": prob_sucesso}
 
