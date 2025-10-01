@@ -89,7 +89,7 @@ class TradeManager:
     # -------------------------------
     # Cálculo de lote normalizado
     # -------------------------------
-    def calculate_normalized_lot(self, symbol, trade_type, entry_price, stop_loss, take_profit=None, risco_alvo=100.0):
+    def calculate_normalized_lot(self, symbol, trade_type, entry_price, stop_loss, take_profit, risco_alvo):
         if not self.connected:
             self.logger.error("MT5 não está conectado")
             return None
@@ -118,6 +118,9 @@ class TradeManager:
 
             risco_loss = self.calculate_risk(symbol, trade_type, lote_final, entry_price, stop_loss)
             risco_profit = self.calculate_risk(symbol, trade_type, lote_final, entry_price, take_profit) if take_profit else 0
+
+            if risco_loss >= risco_alvo*1.5:
+                return None
 
             return {
                 'lote': round(lote_final, 2),
@@ -149,7 +152,6 @@ class TradeManager:
                 self.logger.error(f"Falha ao selecionar {symbol}")
                 return None
 
-            # Cálculo do lote e riscos
             lot_result = self.calculate_normalized_lot(
                 symbol, trade_type, entry_price, stop_loss, take_profit, risco_alvo=100.0
             )
@@ -184,14 +186,6 @@ class TradeManager:
             # 🚀 Enviar ordens
             results = []
 
-            # 1️⃣ Ordem a mercado
-            market_comment = f"{trade_id}_market"
-            market_result = self._send_market_order(symbol, trade_type, stop_loss, take_profit, prob_sucesso*100)
-            if market_result:
-                results.append(market_result)
-
-            # 2️⃣ Ordem pendente
-            pending_comment = f"{trade_id}_pending"
             pending_result = self._send_pending_order(symbol, trade_type, entry_price, stop_loss, take_profit, prob_sucesso*100)
             if pending_result:
                 results.append(pending_result)
@@ -199,7 +193,6 @@ class TradeManager:
             return {
                 'success': True if results else False,
                 'orders': results,
-                'market_order': market_result,
                 'pending_order': pending_result,
                 'prob_sucesso': prob_sucesso,
                 'risco_loss': risco_loss,
@@ -210,66 +203,10 @@ class TradeManager:
             self.logger.error(f"Erro ao enviar ordem: {e}")
             return None
 
-    def _send_market_order(self, symbol, trade_type, stop_loss, take_profit, prob_sucesso):
-        """Envia ordem a mercado imediata"""
-        try:
-            tick = mt5.symbol_info_tick(symbol)
-            if not tick:
-                self.logger.error(f"Não foi possível obter tick de {symbol}")
-                return None
-
-            # Preço correto conforme tipo
-            price = tick.ask if trade_type.lower() == 'compra' else tick.bid
-            if price <= 0:
-                self.logger.error(f"Preço inválido para {symbol}: {price}")
-                return None
-
-            lot_result = self.calculate_normalized_lot(symbol, trade_type, price, stop_loss, take_profit, risco_alvo=100.0)
-            if not lot_result:
-                return None
-            
-            lot_size = lot_result['lote']
-            order_type = mt5.ORDER_TYPE_BUY if trade_type.lower() == 'compra' else mt5.ORDER_TYPE_SELL
-
-            filling_modes = [mt5.ORDER_FILLING_RETURN, mt5.ORDER_FILLING_FOK, mt5.ORDER_FILLING_IOC]
-
-            for mode in filling_modes:
-                request = {
-                    "action": mt5.TRADE_ACTION_DEAL,
-                    "symbol": symbol,
-                    "volume": lot_size,
-                    "type": order_type,
-                    "price": price,
-                    "sl": stop_loss,
-                    "tp": take_profit,
-                    "deviation": 20,
-                    "magic": 99999,
-                    "type_time": mt5.ORDER_TIME_GTC,
-                    "type_filling": mode,
-                    "comment": f"{prob_sucesso:.1f}%",
-                }
-
-                result = mt5.order_send(request)
-
-                if result and result.retcode == mt5.TRADE_RETCODE_DONE:
-                    self.logger.info(f"✅ Ordem a mercado executada: {symbol} | ticket={result.order}")
-                    return {
-                        'order': result.order,
-                        'risco_loss': lot_result['riscoLoss'],
-                        'risco_profit': lot_result['riscoProfit']
-                    }
-
-            return None
-
-        except Exception as e:
-            self.logger.error(f"Erro em ordem a mercado {symbol}: {e}")
-            return None
-
-
     def _send_pending_order(self, symbol, trade_type, entry_price, stop_loss, take_profit, prob_sucesso):
         """Envia ordem pendente"""
         try:
-            lot_result = self.calculate_normalized_lot(symbol, trade_type, entry_price, stop_loss, take_profit, risco_alvo=100.0)
+            lot_result = self.calculate_normalized_lot(symbol, trade_type, entry_price, stop_loss, take_profit, risco_alvo=20.0)
             if not lot_result:
                 return None
 
@@ -293,7 +230,7 @@ class TradeManager:
                 "sl": stop_loss,
                 "tp": take_profit,
                 "deviation": 20,
-                "magic": 88888,
+                "magic": 777777,
                 "type_time": mt5.ORDER_TIME_GTC,
                 "type_filling": mt5.ORDER_FILLING_RETURN,
                 "comment": f"{prob_sucesso:.1f}%",

@@ -31,10 +31,12 @@ def main():
     tm = TradeManager(
         logger=logger,
         mt5_path="C:/Program Files/MetaTrader 5 - IA/terminal64.exe",
-        login=61410395,
-        password="bkshe2Lqc(",
+        # login=61410395,
+        # password="bkshe2Lqc(",
+        login=61408587,
+        password="T&ster123!",
         server="Pepperstone-Demo",
-        threshold=0.5
+        threshold=0.6
     )
 
     if not tm.connected:
